@@ -3,6 +3,10 @@ const router = express.Router()
 const User = require('../models/User')
 const { body, validationResult } = require('express-validator');
 var bcrypt = require('bcryptjs');
+var jwt = require('jsonwebtoken');
+
+
+const JWT_SECRET = "sanmeet btech 111903087 coep23 "
 
 // define the home page route
 //Create a user using POST /api/auth/createuser ; Doesn't require Authentication(login)
@@ -37,7 +41,13 @@ router.post('/createuser',
                 password: secPassword,
             })
 
-            res.json(user);
+            // Create JWT token to send as a response to user/client
+            const userData = {
+                userID: user.id
+            }
+            const authToken = jwt.sign(userData, JWT_SECRET);
+            res.json(authToken);
+
         } catch (error) {
             console.error(error.message);
             res.status(500).json("Some Error occured");
