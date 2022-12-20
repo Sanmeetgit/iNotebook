@@ -2,6 +2,7 @@ const express = require('express')
 const router = express.Router()
 const User = require('../models/User')
 const { body, validationResult } = require('express-validator');
+var bcrypt = require('bcryptjs');
 
 // define the home page route
 //Create a user using POST /api/auth/createuser ; Doesn't require Authentication(login)
@@ -24,10 +25,16 @@ router.post('/createuser',
             if (user) {
                 return res.status(400).json({ error: "User with same email already exists!!" })
             }
+
+            // Generate salt and Hash plaintext passwd+salt
+            var salt = await bcrypt.genSalt(10);
+            var secPassword = await bcrypt.hash(req.body.password, salt);
+
+            // Create User
             user = await User.create({
                 name: req.body.name,
                 email: req.body.email,
-                password: req.body.password,
+                password: secPassword,
             })
 
             res.json(user);
