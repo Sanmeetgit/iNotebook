@@ -10,10 +10,10 @@ const fetchuser = require('../middlewares/fetchuser');
 const JWT_SECRET = "sanmeet btech 111903087 coep23"
 
 //ROUTE 1 : Create a user using POST /api/auth/createuser ; Doesn't require Authentication(login)
-router.post('/createuser',
+router.post('/createuser', [
     body('name', "Name is too short").isLength({ min: 2 }),
     body('email', "Email is not valid").isEmail(),
-    body('password', "Password is too short").isLength({ min: 5 }),
+    body('password', "Password is too short").isLength({ min: 5 }) ],
     async (req, res) => {
         // Finds the validation errors in this request and wraps them in an object with handy functions
         // If there are errors then return a bad request and the errors
@@ -57,9 +57,9 @@ router.post('/createuser',
 
 
 //ROUTE 2 : Authenticate a user using POST /api/auth/login ; Doesn't require Authentication(login)
-router.post('/login',
+router.post('/login', [
     body('email', "Enter a valid email").isEmail(),
-    body('password', "Password can not be blank").exists(),
+    body('password', "Password can not be blank").exists() ],
     async (req, res) => {
         // Destructuring request body
         const { email, password } = req.body;
