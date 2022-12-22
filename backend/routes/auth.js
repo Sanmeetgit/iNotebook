@@ -4,11 +4,12 @@ const User = require('../models/User')
 const { body, validationResult } = require('express-validator');
 var bcrypt = require('bcryptjs');
 var jwt = require('jsonwebtoken');
+const fetchuser = require('../middlewares/fetchuser');
 
 
 const JWT_SECRET = "sanmeet btech 111903087 coep23"
 
-//Create a user using POST /api/auth/createuser ; Doesn't require Authentication(login)
+//ROUTE 1 : Create a user using POST /api/auth/createuser ; Doesn't require Authentication(login)
 router.post('/createuser',
     body('name', "Name is too short").isLength({ min: 2 }),
     body('email', "Email is not valid").isEmail(),
@@ -45,17 +46,17 @@ router.post('/createuser',
                 userID: user.id
             }
             const authToken = jwt.sign(userData, JWT_SECRET);
-            res.json(authToken);
+            res.json({authToken});
 
         } catch (error) {
             console.error(error.message);
-            res.status(500).json("Internal Server Error");
+            res.status(500).json({error:"Internal Server Error"});
         };
     })
 
 
 
-//Authenticate a user using POST /api/auth/login ; Doesn't require Authentication(login)
+//ROUTE 2 : Authenticate a user using POST /api/auth/login ; Doesn't require Authentication(login)
 router.post('/login',
     body('email', "Enter a valid email").isEmail(),
     body('password', "Password can not be blank").exists(),
@@ -87,12 +88,27 @@ router.post('/login',
                 userID: user.id
             }
             const authToken = jwt.sign(userData, JWT_SECRET);
-            res.json(authToken);
+            res.json({authToken});
 
         } catch (error) {
             console.error(error.message);
-            res.status(500).json("Internal Server Error");
+            res.status(500).json({error:"Internal Server Error"});
         };
+    })
+
+
+//ROUTE 3 : Get User Data of a user using token using POST /api/auth/getuser ; Requires Authentication(login)
+// fetchuser is a middleware, it will run first and then next function will run which is called in the middleware itself
+router.post('/getuser', fetchuser,
+    async (req, res) => {
+        try {
+            const user_id = req.user.userID;
+            const user = await User.findById(user_id).select("-password");
+            res.send(user);
+        } catch (error) {
+            console.error(error.message);
+            res.status(500).json({error:"Internal Server Error"});
+        }
     })
 
 module.exports = router
