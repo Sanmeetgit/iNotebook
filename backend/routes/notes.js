@@ -59,17 +59,45 @@ router.put('/updatenote/:id', fetchuser, async (req, res) => {
 
     // if note not found
     if(!note) {
-      res.status(404).send("Note Not Found!!")
+      return res.status(404).send("Note Not Found!!")
     }
 
     // If not a correct user, Access denied
     if(note.user.toString() != req.user.userID){
-      res.status(401).send("Not Allowed");
+      return res.status(401).send("Not Allowed");
     }
 
     // If everything's correct
     const updatedNote = await Note.findByIdAndUpdate(req.params.id, {$set:newNote}, {new:true});
     res.json(updatedNote);
+
+  } catch (error) {
+    console.error(error.message);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+})
+
+//ROUTE 4 : Delete an existing note of user using DELETE /api/notes/deletenote ; Requires Authentication
+// :id is a parameter obtained from url, (ID of note)
+router.delete('/deletenote/:id', fetchuser, async (req, res) => {
+  try {
+
+    // First find a note using ID and then verify if the user who is deleting the note is the one who created it (User can only delete his own notes)
+    const note = await Note.findById(req.params.id);
+
+    // if note not found
+    if(!note) {
+      return res.status(404).send("Note Not Found!!")
+    }
+
+    // If not a correct user, Access denied
+    if(note.user.toString() != req.user.userID){
+      return res.status(401).send("Not Allowed");
+    }
+
+    // If everything's correct
+    const deletedNote = await Note.findByIdAndDelete(req.params.id);
+    res.json({"status":"Note Deleted Successfully", "DeletedNote":deletedNote});
 
   } catch (error) {
     console.error(error.message);
