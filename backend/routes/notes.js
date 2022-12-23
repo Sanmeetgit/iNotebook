@@ -4,7 +4,7 @@ const Note = require('../models/Note')
 const { body, validationResult } = require('express-validator');
 const fetchuser = require('../middlewares/fetchuser');
 
-//ROUTE 1 : Get All notes of user using GET /api/auth/fetchallnotes ; Requires Authentication
+//ROUTE 1 : Get All notes of user using GET /api/notes/fetchallnotes ; Requires Authentication
 router.get('/fetchallnotes', fetchuser, async (req, res) => {
   try {
     // find all notes of a particular user using his ID.
@@ -16,7 +16,7 @@ router.get('/fetchallnotes', fetchuser, async (req, res) => {
   }
 })
 
-//ROUTE 2 : Add a note of user using POST /api/auth/addnote ; Requires Authentication
+//ROUTE 2 : Add a note of user using POST /api/notes/addnote ; Requires Authentication
 router.post('/addnote', [
   body('title', "Title is too short").isLength({ min: 3 }),
   body('description', "Description is too short").isLength({ min: 5 })
@@ -41,5 +41,41 @@ router.post('/addnote', [
     res.status(500).json({ error: "Internal Server Error" });
   }
 })
+
+//ROUTE 3 : Update an existing note of user using PUT /api/notes/updatenote ; Requires Authentication
+// :id is a parameter obtained from url, (ID of note)
+router.put('/updatenote/:id', fetchuser, async (req, res) => {
+  try {
+    // Destructuring
+    const {title, description, tag} = req.body;
+    // Create a new note for updation, add only those fields which are to be updated
+    let newNote = {};
+    if(title) {newNote.title = title};
+    if(description) {newNote.description = description};
+    if(tag) {newNote.tag = tag};
+
+    // First find a note using ID and then verify if the user who is updating the note is the one who created it (User can only update his own notes)
+    const note = await Note.findById(req.params.id);
+
+    // if note not found
+    if(!note) {
+      res.status(404).send("Note Not Found!!")
+    }
+
+    // If not a correct user, Access denied
+    if(note.user.toString() != req.user.userID){
+      res.status(401).send("Not Allowed");
+    }
+
+    // If everything's correct
+    const updatedNote = await Note.findByIdAndUpdate(req.params.id, {$set:newNote}, {new:true});
+    res.json(updatedNote);
+
+  } catch (error) {
+    console.error(error.message);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+})
+
 
 module.exports = router
